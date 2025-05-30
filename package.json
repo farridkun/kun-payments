@@ -3,9 +3,11 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "log": "pm2 logs api-kun-payments",
+    "log-worker": "pm2 logs worker-kun-payments",
+    "log-socket": "pm2 logs socket-kun-payments",
     "redeploy": "pm2 reload api-kun-payments",
     "redeploy-worker": "pm2 reload worker-kun-payments",
-    "log-worker": "pm2 logs worker-kun-payments"
+    "redeploy-socket": "pm2 reload socket-kun-payments"
   },
   "dependencies": {
     "@socket.io/redis-adapter": "^8.3.0",
