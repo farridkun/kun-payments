@@ -1,7 +1,9 @@
 {
   "name": "api-kun-payments",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/index.ts",
+    "log": "pm2 logs api-kun-payments",
+    "redeploy": "pm2 reload api-kun-payments"
   },
   "dependencies": {
     "dotenv": "^16.5.0",
