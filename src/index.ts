@@ -1,22 +1,17 @@
 import { Hono } from 'hono'
+import { createServer } from 'http'
 
-import { Logger } from './lib/logger'
-import { connectRabbitMQ } from './lib/rabbitmq'
-
-import payment from './route/payment'
+import payment from './route/payment.js'
+import { initSocket } from '../mc-socket.js'
 
 const app = new Hono()
-
-connectRabbitMQ().catch((err) => {
-  Logger('Error connecting to RabbitMQ:', err)
-})
-
-app.get('/', async (c) => {
-  return c.text('Kun Payments - Midtrans Integration!')
-})
+app.get('/', (c) => c.text('Kun Payments - Midtrans Integration!'))
 app.route('/payment', payment)
 
-export default { 
-  port: 3023, 
-  fetch: app.fetch,
-} 
+const server = createServer(app.fetch)
+
+initSocket(server)
+
+server.listen(3023, () => {
+  console.log('Kun Payments running at Port 3023')
+})

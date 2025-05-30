@@ -60,7 +60,6 @@ payment.post('/getCardToken', async (c) => {
 
 payment.post('/charge', async (c) => {
   const body = await c.req.json()
-  console.log("🚀 ~ payment.post ~ body:", body)
 
   if (!body.payment_type) {
     Logger('Payment type is required', body)
@@ -94,7 +93,7 @@ payment.post('/charge', async (c) => {
     }
 
     await db.collection('transactions').insertOne(paymentData)
-    Logger('Transaction was records', paymentData)
+    Logger('Transaction was records', paymentData.order_id)
 
     return c.json({
       message: 'Payment processed successfully',
@@ -109,7 +108,6 @@ payment.post('/charge', async (c) => {
 payment.post('/callback', async (c) => {
   const cb = await c.req.json()
   const body = cb?.data || cb
-  Logger('Callback received', body)
 
   if (!body || !body.transaction_id) {
     Logger('Invalid callback data', body)
@@ -117,7 +115,7 @@ payment.post('/callback', async (c) => {
   }
 
   if (body.transaction_status !== 'capture' && body.transaction_status !== 'settlement') {
-    Logger('Transaction status is not capture or settlement', body)
+    Logger('Transaction status is not capture or settlement', { order_id:body.order_id ,transaction_status: body.transaction_status })
     return c.json({ error: 'Transaction status is not capture or settlement' }, 400)
   }
 
@@ -125,13 +123,13 @@ payment.post('/callback', async (c) => {
     const payload = JSON.stringify(body)
     const resolvedChannel = await channel
     resolvedChannel.sendToQueue('m_callback', Buffer.from(payload))
-    Logger('Message pushed to RabbitMQ', body)
+    Logger('Message pushed to RabbitMQ', body.transaction_id)
   } catch (error) {
     Logger('Failed to send message to RabbitMQ', { error, body })
     return c.json({ error: 'Failed to push message to queue' }, 500)
   }
 
-  return c.json({ message: 'Callback received and queued', data: body })
+  return c.json({ message: 'Callback received and queued', data: body.transaction_id })
 })
 
 export default payment
