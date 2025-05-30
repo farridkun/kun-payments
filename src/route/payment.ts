@@ -140,7 +140,7 @@ payment.post('/callback', async (c) => {
     created_at: new Date(),
     updated_at: new Date(),
   })
-  Logger('Callback processed and saved', { transaction_id: transactionId, notification_type: body.notification_type })
+  Logger('Callback processed and saved', { transaction_id: transactionId, notification_type: body.data.notification_type })
 
   return c.json({ message: 'Callback request received', data: body })
 })
