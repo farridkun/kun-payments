@@ -1,6 +1,6 @@
-import { Server } from 'socket.io'
 import { Logger } from './src/lib/logger'
 
+const { Server } = require('socket.io')
 const { createAdapter } = require('@socket.io/redis-adapter')
 const { createClient } = require('redis')
 
