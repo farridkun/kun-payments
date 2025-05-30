@@ -1,17 +1,19 @@
 import { Hono } from 'hono'
-import { createServer } from 'http'
 
-import payment from './route/payment.js'
 // import { initSocket } from '../mc-socket.js'
 
-const app = new Hono()
-app.get('/', (c) => c.text('Kun Payments - Midtrans Integration!'))
-app.route('/payment', payment)
+import payment from './route/payment'
 
-const server = createServer(app.fetch)
+const app = new Hono()
+
+app.get('/', async (c) => {
+  return c.text('Kun Payments - Midtrans Integration!')
+})
+app.route('/payment', payment)
 
 // initSocket(server)
 
-server.listen(3023, () => {
-  console.log('Kun Payments running at Port 3023')
-})
+export default { 
+  port: 3023, 
+  fetch: app.fetch,
+} 
