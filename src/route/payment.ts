@@ -115,6 +115,11 @@ payment.post('/callback', async (c) => {
     return c.json({ error: 'Invalid callback data' }, 400)
   }
 
+  if (body.transaction_status !== 'capture' && body.transaction_status !== 'settlement') {
+    Logger('Transaction status is not capture or settlement', body)
+    return c.json({ error: 'Transaction status is not capture or settlement' }, 400)
+  }
+
   const db = await dbPayments
   const transactionId = body.transaction_id
   const updateResult = await db.collection('transactions').updateOne(
