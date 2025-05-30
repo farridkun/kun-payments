@@ -58,6 +58,7 @@ payment.post('/getCardToken', async (c) => {
 
 payment.post('/charge', async (c) => {
   const body = await c.req.json()
+  console.log("🚀 ~ payment.post ~ body:", body)
 
   if (!body.payment_type) {
     Logger('Payment type is required', body)
@@ -65,7 +66,10 @@ payment.post('/charge', async (c) => {
   }
   
   try {
-    const chargeResponse = await MidtransPayment.charge(DummyPayment(body?.payment_type))
+    const chargeResponse = await MidtransPayment.charge(DummyPayment(
+      body?.payment_type,
+      body?.bank ? body?.bank : undefined
+    ))
 
     if (chargeResponse.status_code !== '201') {
       return c.json({ error: 'Payment failed', details: chargeResponse }, 400)
@@ -82,7 +86,8 @@ payment.post('/charge', async (c) => {
       created_at: new Date(),
       updated_at: new Date(),
       ...body?.payment_type === 'bank_transfer' && {
-        va_number: chargeResponse?.permata_va_number
+        va_number: chargeResponse?.permata_va_number || chargeResponse?.va_numbers?.[0]?.va_number,
+        bank: chargeResponse?.va_numbers?.[0]?.bank || 'Permata VA',
       }
     }
 
@@ -100,14 +105,15 @@ payment.post('/charge', async (c) => {
 })
 
 payment.post('/callback', async (c) => {
-  const { data: body } = await c.req.json()
+  const cb = await c.req.json()
+
+  const body = cb?.data || cb
+  Logger('Callback received', body)
 
   if (!body || !body.transaction_id) {
     Logger('Invalid callback data', body)
     return c.json({ error: 'Invalid callback data' }, 400)
   }
-
-  Logger('Callback received', body)
 
   const db = await dbPayments
   const transactionId = body.transaction_id
