@@ -3,7 +3,9 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "log": "pm2 logs api-kun-payments",
-    "redeploy": "pm2 reload api-kun-payments"
+    "redeploy": "pm2 reload api-kun-payments",
+    "redeploy-worker": "pm2 reload worker-kun-payments",
+    "log-worker": "pm2 logs worker-kun-payments"
   },
   "dependencies": {
     "amqplib": "^0.10.8",
