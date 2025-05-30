@@ -8,6 +8,7 @@ import { Logger } from '../lib/logger'
 
 const payment = new Hono()
 const dbPayments = connectToMongo()
+const { channel } = require('../lib/rabbitmq')
 const isDummy = true;
 
 payment.get('/', (c) => {
@@ -106,7 +107,6 @@ payment.post('/charge', async (c) => {
 
 payment.post('/callback', async (c) => {
   const cb = await c.req.json()
-
   const body = cb?.data || cb
   Logger('Callback received', body)
 
@@ -120,29 +120,16 @@ payment.post('/callback', async (c) => {
     return c.json({ error: 'Transaction status is not capture or settlement' }, 400)
   }
 
-  const db = await dbPayments
-  const transactionId = body.transaction_id
-  const updateResult = await db.collection('transactions').updateOne(
-    { transaction_id: transactionId },
-    { $set: { transaction_status: 'Payment Accept', updated_at: new Date() } }
-  )
-
-  if (updateResult.modifiedCount === 0) {
-    Logger('No transaction found to update', { transaction_id: transactionId })
-    return c.json({ error: 'No transaction found to update' }, 404)
+  try {
+    const payload = JSON.stringify(body)
+    channel.sendToQueue('m_callback', Buffer.from(payload))
+    Logger('Message pushed to RabbitMQ', body)
+  } catch (error) {
+    Logger('Failed to send message to RabbitMQ', { error, body })
+    return c.json({ error: 'Failed to push message to queue' }, 500)
   }
 
-  await db.collection('notifications').insertOne({
-    notification_type: 'midtrans_notification',
-    notification_details: {
-      ...body,
-    },
-    created_at: new Date(),
-    updated_at: new Date(),
-  })
-  Logger('Callback processed and saved', { transaction_id: transactionId, notification_type: body })
-
-  return c.json({ message: 'Callback request received', data: body })
+  return c.json({ message: 'Callback received and queued', data: body })
 })
 
 export default payment
