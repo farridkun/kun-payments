@@ -5,10 +5,11 @@ import { CardDummy } from '../helper/dummyCard'
 import { MidtransPayment } from '../lib/coreApi'
 import { DummyPayment } from '../helper/dummyPayment'
 import { Logger } from '../lib/logger'
+import { connectRabbitMQ } from '../lib/rabbitmq'
 
 const payment = new Hono()
 const dbPayments = connectToMongo()
-const { channel } = require('../lib/rabbitmq')
+const channel = connectRabbitMQ()
 const isDummy = true;
 
 payment.get('/', (c) => {
@@ -122,7 +123,8 @@ payment.post('/callback', async (c) => {
 
   try {
     const payload = JSON.stringify(body)
-    channel.sendToQueue('m_callback', Buffer.from(payload))
+    const resolvedChannel = await channel
+    resolvedChannel.sendToQueue('m_callback', Buffer.from(payload))
     Logger('Message pushed to RabbitMQ', body)
   } catch (error) {
     Logger('Failed to send message to RabbitMQ', { error, body })
