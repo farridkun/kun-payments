@@ -1,4 +1,4 @@
-import { getIO } from "./mc-socket"
+// import { getIO } from "./mc-socket"
 import { Logger } from "./src/lib/logger"
 import { connectToMongo } from "./src/lib/mongo"
 
@@ -9,7 +9,7 @@ const startWorker = async () => {
   const channel = await connection.createChannel()
   await channel.assertQueue('m_callback')
 
-  const io = getIO()
+  // const io = getIO()
 
   Logger('Worker connected to RabbitMQ and ready to process messages')
 
@@ -38,13 +38,13 @@ const startWorker = async () => {
           updated_at: new Date(),
         })
 
-        if (io) {
-          io.to(transactionId).emit('payment_status_updated', {
-            transaction_id: transactionId,
-            status: 'settlement',
-          })
-          console.log('Emitted to room:', transactionId)
-        }
+        // if (io) {
+        //   io.to(transactionId).emit('payment_status_updated', {
+        //     transaction_id: transactionId,
+        //     status: 'settlement',
+        //   })
+        //   console.log('Emitted to room:', transactionId)
+        // }
 
         Logger('Worker: Callback processed and saved', {
           transaction_id: transactionId,
