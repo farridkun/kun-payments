@@ -1,8 +1,7 @@
+import { Server } from 'socket.io'
+import { createAdapter } from '@socket.io/redis-adapter'
+import { createClient } from 'redis'
 import { Logger } from './src/lib/logger'
-
-const { Server } = require('socket.io')
-const { createAdapter } = require('@socket.io/redis-adapter')
-const { createClient } = require('redis')
 
 let io: any
 
