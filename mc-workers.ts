@@ -4,7 +4,7 @@ import { connectToMongo } from "./src/lib/mongo"
 const amqp = require('amqplib')
 
 const startWorker = async () => {
-  const connection = await amqp.connect('amqp://localhost')
+  const connection = await amqp.connect(process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672')
   const channel = await connection.createChannel()
   await channel.assertQueue('m_callback')
 
