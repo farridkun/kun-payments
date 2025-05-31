@@ -75,8 +75,14 @@ payment.post('/charge', async (c) => {
         order_id: `order-id-${Math.random().toString(36).substring(2, 6)}`,
         gross_amount: body.gross_amount,
       },
-      bank_transfer: {
-        bank: body.bank || 'permata',
+      ...body.bank !== 'gopay' ? {
+          bank_transfer: {
+            bank: body.bank || 'permata',
+          },
+        } : {
+        qris: {
+          acquirer: "gopay"
+        }
       },
       payment_type: 'bank_transfer',
       customer_details: {
@@ -116,6 +122,9 @@ payment.post('/charge', async (c) => {
       ...body?.payment_type === 'bank_transfer' && {
         va_number: chargeResponse?.permata_va_number || chargeResponse?.va_numbers?.[0]?.va_number,
         bank: chargeResponse?.va_numbers?.[0]?.bank || 'Permata VA',
+      },
+      ...body?.bank === 'gopay' && {
+        qr_url: chargeResponse?.actions?.[0]?.url
       }
     }
 

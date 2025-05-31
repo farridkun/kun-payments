@@ -11,3 +11,4 @@
 | --- | --- |
 | `credit_card` | Credit Card |
 | `bank_transfer` | VA - Permata |
+| `QRIS` | QRIS |
