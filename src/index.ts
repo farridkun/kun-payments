@@ -21,7 +21,6 @@ app.get(
   upgradeWebSocket(() => {
     return {
       onMessage(event: any, ws: any) {
-        // Expect: { join: transaction_id }
         try {
           const msg = JSON.parse(event.data)
           if (msg.join) {

@@ -164,7 +164,7 @@ payment.post('/callback', async (c) => {
       broadcastToRoom(body.transaction_id, {
         event: 'transaction_status',
         transaction_id: body.transaction_id,
-        status: 'processing',
+        status: 'Payment Accept',
       })
     }
   } catch (error) {

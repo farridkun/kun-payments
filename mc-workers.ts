@@ -1,6 +1,5 @@
 import { Logger } from "./src/lib/logger"
 import { connectToMongo } from "./src/lib/mongo"
-import { broadcastToRoom } from "./src/lib/ws-broadcast"
 
 const amqp = require('amqplib')
 
@@ -40,14 +39,6 @@ const startWorker = async () => {
         Logger('Worker: Callback processed and saved', {
           transaction_id: transactionId,
         })
-
-        if (transactionId) {
-          broadcastToRoom(transactionId, {
-            event: 'transaction_status',
-            transaction_id: transactionId,
-            status: 'Payment Accept',
-          })
-        }
 
         channel.ack(msg)
       } catch (error) {
