@@ -84,7 +84,7 @@ payment.post('/charge', async (c) => {
           acquirer: "gopay"
         }
       },
-      payment_type: 'bank_transfer',
+      payment_type: body?.bank === 'gopay'? 'qris' : 'bank_transfer',
       customer_details: {
         first_name: 'Farrid',
         last_name: 'Kuntoro',
