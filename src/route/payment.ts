@@ -6,6 +6,7 @@ import { MidtransPayment } from '../lib/coreApi'
 import { DummyPayment } from '../helper/dummyPayment'
 import { Logger } from '../lib/logger'
 import { connectRabbitMQ } from '../lib/rabbitmq'
+import { broadcastToRoom } from '../lib/ws-broadcast'
 
 const payment = new Hono()
 const dbPayments = connectToMongo()
@@ -65,12 +66,38 @@ payment.post('/charge', async (c) => {
     Logger('Payment type is required', body)
     return c.json({ error: 'Payment type is required' }, 400)
   }
-  
-  try {
-    const chargeResponse = await MidtransPayment.charge(DummyPayment(
+
+  let payload;
+
+  if (body?.gross_amount) {
+    payload = {
+      transaction_details: {
+        order_id: `order-id-${Math.random().toString(36).substring(2, 6)}`,
+        gross_amount: body.gross_amount,
+      },
+      bank_transfer: {
+        bank: body.bank || 'permata',
+      },
+      payment_type: 'bank_transfer',
+      customer_details: {
+        first_name: 'Farrid',
+        last_name: 'Kuntoro',
+        email: 'farridpastikaya@gmail.com',
+        phone: '08979829907',
+        customer_details_required_fields: ['email', 'first_name', 'phone'],
+      },
+      custom_expiry: { expiry_duration: 60, unit: 'minute' },
+      metadata: { you: 'can', put: 'any', parameter: 'you like' },
+    }
+  } else {
+    payload = DummyPayment(
       body?.payment_type,
       body?.bank ? body?.bank : undefined
-    ))
+    )
+  }
+  
+  try {
+    const chargeResponse = await MidtransPayment.charge(payload)
 
     if (chargeResponse.status_code !== '201') {
       return c.json({ error: 'Payment failed', details: chargeResponse }, 400)
@@ -94,6 +121,14 @@ payment.post('/charge', async (c) => {
 
     await db.collection('transactions').insertOne(paymentData)
     Logger('Transaction was records', paymentData.order_id)
+
+    if (paymentData.transaction_id) {
+      broadcastToRoom(paymentData.transaction_id, {
+        event: 'transaction_status',
+        transaction_id: paymentData.transaction_id,
+        status: paymentData.transaction_status,
+      })
+    }
 
     return c.json({
       message: 'Payment processed successfully',
@@ -124,12 +159,47 @@ payment.post('/callback', async (c) => {
     const resolvedChannel = await channel
     resolvedChannel.sendToQueue('m_callback', Buffer.from(payload))
     Logger('Message pushed to RabbitMQ', body.transaction_id)
+
+    if (body.transaction_id) {
+      broadcastToRoom(body.transaction_id, {
+        event: 'transaction_status',
+        transaction_id: body.transaction_id,
+        status: 'processing',
+      })
+    }
   } catch (error) {
     Logger('Failed to send message to RabbitMQ', { error, body })
     return c.json({ error: 'Failed to push message to queue' }, 500)
   }
 
   return c.json({ message: 'Callback received and queued', data: body.transaction_id })
+})
+
+payment.get('/transactionData', async (c) => {
+  const transactionId = c.req.query('transaction_id')
+
+  if (!transactionId) {
+    Logger('Transaction ID is required', { transactionId })
+    return c.json({ error: 'Transaction ID is required' }, 400)
+  }
+
+  try {
+    const db = await dbPayments
+    const transaction = await db.collection('transactions').findOne({ transaction_id: transactionId })
+
+    if (!transaction) {
+      Logger('Transaction not found', { transactionId })
+      return c.json({ error: 'Transaction not found' }, 404)
+    }
+
+    return c.json({
+      message: 'Transaction data retrieved successfully',
+      data: transaction,
+    })
+  } catch (error) {
+    Logger('Failed to retrieve transaction data', error)
+    return c.json({ error: 'Failed to retrieve transaction data' }, 500)
+  }
 })
 
 export default payment

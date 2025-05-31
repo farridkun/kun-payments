@@ -1,6 +1,6 @@
-// import { getIO } from "./mc-socket"
 import { Logger } from "./src/lib/logger"
 import { connectToMongo } from "./src/lib/mongo"
+import { broadcastToRoom } from "./src/lib/ws-broadcast"
 
 const amqp = require('amqplib')
 
@@ -8,8 +8,6 @@ const startWorker = async () => {
   const connection = await amqp.connect('amqp://localhost')
   const channel = await connection.createChannel()
   await channel.assertQueue('m_callback')
-
-  // const io = getIO()
 
   Logger('Worker connected to RabbitMQ and ready to process messages')
 
@@ -38,22 +36,23 @@ const startWorker = async () => {
           updated_at: new Date(),
         })
 
-        // if (io) {
-        //   io.to(transactionId).emit('payment_status_updated', {
-        //     transaction_id: transactionId,
-        //     status: 'settlement',
-        //   })
-        //   console.log('Emitted to room:', transactionId)
-        // }
 
         Logger('Worker: Callback processed and saved', {
           transaction_id: transactionId,
         })
 
+        if (transactionId) {
+          broadcastToRoom(transactionId, {
+            event: 'transaction_status',
+            transaction_id: transactionId,
+            status: 'Payment Accept',
+          })
+        }
+
         channel.ack(msg)
       } catch (error) {
         Logger('Worker error while processing message', { error })
-        channel.nack(msg, false, false) // optional: buang pesan jika gagal
+        channel.nack(msg, false, false)
       }
     }
   })
@@ -61,5 +60,5 @@ const startWorker = async () => {
 
 startWorker().catch((err) => {
   Logger('Worker failed to start', err)
-  process.exit(1) // exit the process if worker fails to start
+  process.exit(1)
 })
