@@ -2,6 +2,7 @@
   "name": "api-kun-payments",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
+    "deploy": "git pull origin main && docker-compose up -d --build",
     "log": "pm2 logs api-kun-payments",
     "log-worker": "pm2 logs worker-kun-payments",
     "redeploy-all": "git pull origin main && pm2 reload api-kun-payments && pm2 reload worker-kun-payments",

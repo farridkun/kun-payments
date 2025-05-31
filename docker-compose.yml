@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: s-kun-app
+    ports:
+      - "3023:3023"
+    depends_on:
+      - rabbitmq
+    command: bun run ./index.ts
+    restart: always
+
+  worker:
+    build: .
+    container_name: s-kun-worker
+    depends_on:
+      - rabbitmq
+    command: bun run ./mc-workers.ts
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: kun-rabbitmq
+    ports:
+      - "5672:5672"     # for AMQP
+      - "15672:15672"   # for management dashboard
+    restart: always
