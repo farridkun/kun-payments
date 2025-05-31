@@ -109,7 +109,7 @@ payment.post('/charge', async (c) => {
       order_id: chargeResponse.order_id,
       transaction_id: chargeResponse.transaction_id,
       transaction_status: chargeResponse.transaction_status,
-      gross_amount: chargeResponse.gross_amount,
+      gross_amount: chargeResponse.gross_amount.replaceAll('.', '').toString(),
       expiry_time: chargeResponse.expiry_time,
       created_at: new Date(),
       updated_at: new Date(),
