@@ -10,5 +10,5 @@
 | Payment Type | Description |
 | --- | --- |
 | `credit_card` | Credit Card |
-| `bank_transfer` | VA - Permata |
+| `bank_transfer` | VA - Permata / BRI / BCA |
 | `QRIS` | QRIS |
